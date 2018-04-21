@@ -74,6 +74,10 @@ private:
 	void modelTransform(); // Position and orientation of the scene
 	bool m_modelLoaded;
 
+	// SSAO
+	void createGBuffers();
+	void createSSAOKernels();
+
 	//Lighting
 	void setLighting();
 
@@ -130,6 +134,14 @@ private:
 	GLuint m_vertexLoc, m_normalLoc;
 	GLuint m_matAmbLoc, m_matDiffLoc, m_matSpecLoc, m_matShinLoc;
 	GLuint m_lightPosLoc, m_lightColLoc;
+
+	// SSAO Buffers
+	GLuint gPosition, gNormal, gAlbedoSpec;
+	GLuint noiseTexture;
+
+	// Kernels
+	std::vector<glm::vec3> ssaoKernel;
+	std::vector<glm::vec3> ssaoNoise;
 
 	// FPS
 	QTime m_time;
