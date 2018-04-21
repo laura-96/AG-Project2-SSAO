@@ -28,6 +28,7 @@ bld/
 
 *.qmake.stash
 *.vcxproj
+*.vcxproj.filters
 *.sln
 
 # Visual Studio 2015 cache/options directory
@@ -57,7 +58,6 @@ artifacts/
 *_i.h
 *.ilk
 *.meta
-*.obj
 *.pch
 *.pdb
 *.pgc
