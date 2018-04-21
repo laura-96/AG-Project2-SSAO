@@ -4,6 +4,7 @@
 #include "phongwindow.h"
 #include "texturingwindow.h"
 #include "normalmapwindow.h"
+#include "ssowindow.h"
 #include <QMenuBar>
 #include <QMenu>
 #include <QMessageBox>
@@ -36,17 +37,22 @@ MainWindow::MainWindow()
 	addNewNormalMap->setText(tr("Add new normal map"));
 	menuWindow->addAction(addNewNormalMap);
 
+	QAction *addNewSSO = new QAction(menuWindow);
+	addNewSSO->setText(tr("Add new SSO"));
+	menuWindow->addAction(addNewSSO);
+
 	//Connects
 	connect(addNew, &QAction::triggered, this, &MainWindow::onAddNewLogo);
 	connect(addNewQuad, &QAction::triggered, this, &MainWindow::onAddNewQuad);
 	connect(addNewModel, &QAction::triggered, this, &MainWindow::onAddNewModel);
 	connect(addNewTexture, &QAction::triggered, this, &MainWindow::onAddNewTexture);
 	connect(addNewNormalMap, &QAction::triggered, this, &MainWindow::onAddNewNormalMap);
+	connect(addNewSSO, &QAction::triggered, this, &MainWindow::onAddNewSSO);
 
 	setMenuBar(menuBar);
 
 	//onAddNewQuad();
-	onAddNewNormalMap();
+	onAddNewSSO();
 }
 
 void MainWindow::onAddNewLogo()
@@ -86,6 +92,14 @@ void MainWindow::onAddNewNormalMap()
 {
 	if (!centralWidget())
 		setCentralWidget(new NormalMapWindow(this));
+	else
+		QMessageBox::information(0, tr("Cannot add new window"), tr("Already occupied. Undock first."));
+}
+
+void MainWindow::onAddNewSSO()
+{
+	if (!centralWidget())
+		setCentralWidget(new SSOWindow(this));
 	else
 		QMessageBox::information(0, tr("Cannot add new window"), tr("Already occupied. Undock first."));
 }

@@ -1,5 +1,5 @@
-#include "phongglwidget.h"
-#include "phongwindow.h"
+#include "ssowidget.h"
+#include "ssowindow.h"
 #include "mainwindow.h"
 #include <QDesktopWidget>
 #include <QApplication>
@@ -7,17 +7,17 @@
 #include <QMessageBox>
 
 
-PhongWindow::PhongWindow(MainWindow* mw) :m_mainWindow(mw)
+SSOWindow::SSOWindow(MainWindow* mw) :m_mainWindow(mw)
 {
 	m_ui.setupUi(this);
 
 	// Insert the m_glWidget in the GUI
-	m_glWidget = new PhongGLWidget("./models/sponza.obj", false);
+	m_glWidget = new SSOWidget("./models/sponza.obj", false);
 	layoutFrame = new QVBoxLayout(m_ui.qGLFrame);
 	layoutFrame->setMargin(0);
 	layoutFrame->addWidget(m_glWidget);
 	m_glWidget->show();
-	
+
 	m_ui.selectCamera->addItem("Static", 0);
 	m_ui.selectCamera->addItem("First Person", 1);
 
@@ -26,16 +26,16 @@ PhongWindow::PhongWindow(MainWindow* mw) :m_mainWindow(mw)
 	connect(m_ui.selectCamera, SIGNAL(activated(QString)), this, SLOT(loadCamera(QString)));
 }
 
-PhongWindow::~PhongWindow()
+SSOWindow::~SSOWindow()
 {
 	if (m_glWidget != nullptr) {
 		delete m_glWidget;
 		m_glWidget = nullptr;
 	}
-		
+
 }
 
-void PhongWindow::dockUndock()
+void SSOWindow::dockUndock()
 {
 	if (parent()) {
 		setParent(0);
@@ -63,14 +63,14 @@ void PhongWindow::dockUndock()
 	}
 }
 
-void PhongWindow::loadModel() 
+void SSOWindow::loadModel()
 {
 	QString filename = QFileDialog::getOpenFileName(this, tr("Load Model"),
 		"./models/", tr("3D Models (*.obj)"));
 
 	bool showFps = false;
-	if(filename.size() != 0)
-	{ 
+	if (filename.size() != 0)
+	{
 		// We delete the glWidget and create another one to restart the GLContext
 		// Otherwise, the painter does not work and the fps are not shown
 		if (m_glWidget != nullptr) {
@@ -78,32 +78,32 @@ void PhongWindow::loadModel()
 			m_glWidget = nullptr;
 		}
 
-		m_glWidget = new PhongGLWidget(filename, showFps);
+		m_glWidget = new SSOWidget(filename, showFps);
 		layoutFrame->addWidget(m_glWidget);
 		m_glWidget->show();
 	}
 
-	
+
 
 }
 
-void PhongWindow::loadCamera(QString cam_type) {
+void SSOWindow::loadCamera(QString cam_type) {
 
 	QVariant type = m_ui.selectCamera->currentData();
-	
+
 	int camera_type = type.value<int>();
 	switch (camera_type)
 	{
 		// Static camera's value is 0
-		case 0:
-			break;
+	case 0:
+		break;
 
 		// First Person Camera's value is 1
-		case 1:
-			break;
+	case 1:
+		break;
 
-		default:
-			break;
+	default:
+		break;
 
 	}
 

@@ -16,6 +16,7 @@ public:
 	void onAddNewModel();
 	void onAddNewTexture();
 	void onAddNewNormalMap();
+	void onAddNewSSO();
 };
 
 #endif
