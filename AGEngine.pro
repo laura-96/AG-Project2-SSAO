@@ -12,7 +12,9 @@ HEADERS       = ./headers/glwidget.h \
 				./headers/texturingglwidget.h \
 				./headers/texturingwindow.h \
 				./headers/normalmapglwidget.h \
-				./headers/normalmapwindow.h
+				./headers/normalmapwindow.h \
+				./headers/ssowindow.h \
+				./headers/ssowidget.h
 
 SOURCES       = ./sources/glwidget.cpp \
                 ./sources/main.cpp \
@@ -28,7 +30,9 @@ SOURCES       = ./sources/glwidget.cpp \
 				./sources/texturingglwidget.cpp \
 				./sources/texturingwindow.cpp \
 				./sources/normalmapglwidget.cpp \
-				./sources/normalmapwindow.cpp
+				./sources/normalmapwindow.cpp \
+				./sources/ssowindow.cpp \
+				./sources/ssowidget.cpp
 
 QT           += widgets
 FORMS		 = ./forms/basicwindow.ui \

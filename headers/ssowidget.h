@@ -58,6 +58,7 @@ private:
 	void reloadShaders();
 
 	void loadGShader();
+	void loadSSAOShader();
 
 	// Camera
 	void initCameraParams();
@@ -76,6 +77,9 @@ private:
 	void modelTransform(); // Position and orientation of the scene
 	bool m_modelLoaded;
 
+	// Quad
+	void createQuadBuffers();
+
 	// SSAO
 	void createGBuffers();
 	void createSSAOKernels();
@@ -89,6 +93,7 @@ private:
 
 	// Draw
 	void GeometryPass(); // 1st Pass
+	void GenSSAOTexture(); // 2nd Pass
 
 	/* Attributes */
 	// Screen
@@ -143,12 +148,22 @@ private:
 	GLuint gp_aPos, gp_aNormal, gp_aTexCoords;	// vertex
 	GLuint gp_model, gp_view, gp_projection;	// vertex
 
+	// SSAO Shader
+	QOpenGLShaderProgram* ssao_program;
+	GLuint ssao_aPos, ssao_aTexCoords; // vertex
+	GLuint ssao_gPos, ssao_gNormal, ssao_texNoise, ssao_samples; //fragment
+	GLuint ssao_screenWidth, ssao_screenHeight, ssao_tileSize, ssao_projection; // fragment
+
+
 	// SSAO Buffers
 	GLuint gBuffer, gPosition, gNormal, gAlbedoSpec;
 	GLuint noiseTexture;
 	GLuint ssaoFBO, ssaoColorBuffer;
 
 	unsigned int attachments[3];
+
+	// Quad
+	GLuint quadVAO, quadVBO;
 
 	// Kernels
 	std::vector<glm::vec3> ssaoKernel;

@@ -109,6 +109,7 @@ void SSOWidget::initializeGL()
 	
 	createSSAOKernels();
 	createGBuffers();
+	createQuadBuffers();
 
 	createBuffersModel();
 	computeBBoxModel();
@@ -133,7 +134,7 @@ void SSOWidget::paintGL()
 		glEnable(GL_CULL_FACE);
 
 	GeometryPass();
-
+	GenSSAOTexture();
 
 	// Show FPS if they are enabled 
 	if (m_showFps)
@@ -291,6 +292,7 @@ void SSOWidget::wheelEvent(QWheelEvent* event)
 void SSOWidget::loadShaders()
 {
 	loadGShader();
+	loadSSAOShader();
 
 }
 
@@ -336,6 +338,43 @@ void SSOWidget::loadGShader()
 	//gp_texcoords = glGetAttribLocation(gPass_program->programId(), "TexCoords");
 	//gp_fragPos = glGetAttribLocation(gPass_program->programId(), "FragPos");
 	//gp_normal = glGetAttribLocation(gPass_program->programId(), "Normal");
+}
+
+void SSOWidget::loadSSAOShader()
+{
+	// Declaration of the shaders
+	QOpenGLShader vs(QOpenGLShader::Vertex, this);
+	QOpenGLShader fs(QOpenGLShader::Fragment, this);
+
+	// Load and compile the shaders
+	vs.compileSourceFile("./shaders/ssao.vert");
+	fs.compileSourceFile("./shaders/ssao.frag");
+
+	// Create the program
+	ssao_program = new QOpenGLShaderProgram;
+
+	// Add the shaders
+	ssao_program->addShader(&fs);
+	ssao_program->addShader(&vs);
+
+	// Link the program
+	ssao_program->link();
+
+	// Bind the program (we are gonna use this program)
+	ssao_program->bind();
+
+	// Get the attribs locations of the vertex shader
+	ssao_aPos = glGetAttribLocation(ssao_program->programId(), "aPos");
+	ssao_aTexCoords = glGetAttribLocation(ssao_program->programId(), "aTexCoords");
+
+	ssao_gPos = glGetAttribLocation(ssao_program->programId(), "gPosition");
+	ssao_gNormal = glGetAttribLocation(ssao_program->programId(), "gNormal");
+	ssao_texNoise = glGetAttribLocation(ssao_program->programId(), "texNoise");
+	ssao_samples = glGetAttribLocation(ssao_program->programId(), "samples");
+	ssao_screenWidth = glGetAttribLocation(ssao_program->programId(), "screenWidth");
+	ssao_screenHeight = glGetAttribLocation(ssao_program->programId(), "screenHeight");
+	ssao_tileSize = glGetAttribLocation(ssao_program->programId(), "tileSize");
+	ssao_projection = glGetAttribLocation(ssao_program->programId(), "projection");
 }
 
 void SSOWidget::initCameraParams()
@@ -581,8 +620,57 @@ void SSOWidget::GeometryPass()
 	// Unbind the vertex array
 	glBindVertexArray(0);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	gPass_program->release();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void SSOWidget::GenSSAOTexture()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	ssao_program->bind();
+	
+	glUniform3fv(ssao_samples, 64, &ssaoKernel[0][0]);
+	
+	projectionTransform();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ssao_gPos);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, ssao_gNormal);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, ssao_texNoise);
+
+	// Render Quad
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+
+	ssao_program->release();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void SSOWidget::createQuadBuffers()
+{
+	float quadVert[] =
+	{
+		// positions        // texture Coords
+		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+		1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+	};
+
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVert), &quadVert, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), NULL);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
 void SSOWidget::createGBuffers()
@@ -625,6 +713,14 @@ void SSOWidget::createGBuffers()
 	attachments[1] = GL_COLOR_ATTACHMENT1;
 	attachments[2] = GL_COLOR_ATTACHMENT2;
 	glDrawBuffers(3, attachments);
+
+	unsigned int rboDepth;
+	glGenRenderbuffers(1, &rboDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Noise Texture
 	glGenTextures(1, &noiseTexture);
