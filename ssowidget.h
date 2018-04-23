@@ -57,6 +57,8 @@ private:
 	void loadShaders();
 	void reloadShaders();
 
+	void loadGShader();
+
 	// Camera
 	void initCameraParams();
 	void projectionTransform(); // Type of camera
@@ -84,6 +86,9 @@ private:
 	// FPS
 	void computeFps();
 	void showFps();
+
+	// Draw
+	void GeometryPass(); // 1st Pass
 
 	/* Attributes */
 	// Screen
@@ -130,14 +135,20 @@ private:
 
 	// Shaders
 	QOpenGLShaderProgram *m_program;
-	GLuint m_transLoc, m_projLoc, m_viewLoc;
-	GLuint m_vertexLoc, m_normalLoc;
 	GLuint m_matAmbLoc, m_matDiffLoc, m_matSpecLoc, m_matShinLoc;
 	GLuint m_lightPosLoc, m_lightColLoc;
 
+	// GPass Shader
+	QOpenGLShaderProgram* gPass_program;
+	GLuint gp_aPos, gp_aNormal, gp_aTexCoords;	// vertex
+	GLuint gp_model, gp_view, gp_projection;	// vertex
+
 	// SSAO Buffers
-	GLuint gPosition, gNormal, gAlbedoSpec;
+	GLuint gBuffer, gPosition, gNormal, gAlbedoSpec;
 	GLuint noiseTexture;
+	GLuint ssaoFBO, ssaoColorBuffer;
+
+	unsigned int attachments[3];
 
 	// Kernels
 	std::vector<glm::vec3> ssaoKernel;

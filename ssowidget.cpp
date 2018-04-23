@@ -132,17 +132,8 @@ void SSOWidget::paintGL()
 	if (m_backFaceCulling)
 		glEnable(GL_CULL_FACE);
 
-	// Bind the VAO to draw the model
-	glBindVertexArray(m_VAOModel);
+	GeometryPass();
 
-	// Apply the geometric transforms to the model (position/orientation)
-	modelTransform();
-
-	// Draw the model
-	glDrawArrays(GL_TRIANGLES, 0, m_model.faces().size() * 3);
-
-	// Unbind the vertex array
-	glBindVertexArray(0);
 
 	// Show FPS if they are enabled 
 	if (m_showFps)
@@ -299,41 +290,7 @@ void SSOWidget::wheelEvent(QWheelEvent* event)
 
 void SSOWidget::loadShaders()
 {
-	// Declaration of the shaders
-	QOpenGLShader vs(QOpenGLShader::Vertex, this);
-	QOpenGLShader fs(QOpenGLShader::Fragment, this);
-
-	// Load and compile the shaders
-	vs.compileSourceFile("./shaders/phong.vert");
-	fs.compileSourceFile("./shaders/phong.frag");
-
-	// Create the program
-	m_program = new QOpenGLShaderProgram;
-
-	// Add the shaders
-	m_program->addShader(&fs);
-	m_program->addShader(&vs);
-
-	// Link the program
-	m_program->link();
-
-	// Bind the program (we are gonna use this program)
-	m_program->bind();
-
-	// Get the attribs locations of the vertex shader
-	m_vertexLoc = glGetAttribLocation(m_program->programId(), "vertex");
-	m_normalLoc = glGetAttribLocation(m_program->programId(), "normal");
-	m_matAmbLoc = glGetAttribLocation(m_program->programId(), "matamb");
-	m_matDiffLoc = glGetAttribLocation(m_program->programId(), "matdiff");
-	m_matSpecLoc = glGetAttribLocation(m_program->programId(), "matspec");
-	m_matShinLoc = glGetAttribLocation(m_program->programId(), "matshin");
-
-	// Get the uniforms locations of the vertex shader
-	m_transLoc = glGetUniformLocation(m_program->programId(), "sceneTransform");
-	m_projLoc = glGetUniformLocation(m_program->programId(), "projTransform");
-	m_viewLoc = glGetUniformLocation(m_program->programId(), "viewTransform");
-	m_lightPosLoc = glGetUniformLocation(m_program->programId(), "lightPos");
-	m_lightColLoc = glGetUniformLocation(m_program->programId(), "lightCol");
+	loadGShader();
 
 }
 
@@ -342,6 +299,43 @@ void SSOWidget::reloadShaders()
 
 	// TO DO: Insert your code here to reload the shaders and update the view
 
+}
+
+void SSOWidget::loadGShader()
+{
+	// Declaration of the shaders
+	QOpenGLShader vs(QOpenGLShader::Vertex, this);
+	QOpenGLShader fs(QOpenGLShader::Fragment, this);
+
+	// Load and compile the shaders
+	vs.compileSourceFile("./shaders/gbuffer.vert");
+	fs.compileSourceFile("./shaders/gbuffer.frag");
+
+	// Create the program
+	gPass_program = new QOpenGLShaderProgram;
+
+	// Add the shaders
+	gPass_program->addShader(&fs);
+	gPass_program->addShader(&vs);
+
+	// Link the program
+	gPass_program->link();
+
+	// Bind the program (we are gonna use this program)
+	gPass_program->bind();
+
+	// Get the attribs locations of the vertex shader
+	gp_aPos = glGetAttribLocation(gPass_program->programId(), "aPos");
+	gp_aNormal = glGetAttribLocation(gPass_program->programId(), "aNormal");
+	gp_aTexCoords = glGetAttribLocation(gPass_program->programId(), "aTexCoords");
+	gp_model = glGetAttribLocation(gPass_program->programId(), "model");
+	gp_view = glGetAttribLocation(gPass_program->programId(), "view");
+	gp_projection = glGetAttribLocation(gPass_program->programId(), "projection");
+
+	// Get the uniforms locations of the fragment shader
+	//gp_texcoords = glGetAttribLocation(gPass_program->programId(), "TexCoords");
+	//gp_fragPos = glGetAttribLocation(gPass_program->programId(), "FragPos");
+	//gp_normal = glGetAttribLocation(gPass_program->programId(), "Normal");
 }
 
 void SSOWidget::initCameraParams()
@@ -359,7 +353,7 @@ void SSOWidget::projectionTransform()
 	proj = glm::perspective(m_fov, m_ar, m_zNear, m_zFar);
 
 	// Send the matrix to the shader
-	glUniformMatrix4fv(m_projLoc, 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(gp_projection, 1, GL_FALSE, &proj[0][0]);
 
 }
 
@@ -399,7 +393,7 @@ void SSOWidget::viewTransform()
 	view = glm::translate(view, -m_sceneCenter);
 
 	// Send the matrix to the shader
-	glUniformMatrix4fv(m_viewLoc, 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(gp_view, 1, GL_FALSE, &view[0][0]);
 }
 
 void SSOWidget::changeBackgroundColor() {
@@ -431,8 +425,8 @@ void SSOWidget::createBuffersModel()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*m_model.faces().size() * 3 * 3, m_model.VBO_vertices(), GL_STATIC_DRAW);
 
 	// Enable the attribute m_vertexLoc
-	glVertexAttribPointer(m_vertexLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(m_vertexLoc);
+	glVertexAttribPointer(gp_aPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(gp_aPos);
 
 	// VBO Normals
 	glGenBuffers(1, &m_VBOModelNorms);
@@ -440,8 +434,8 @@ void SSOWidget::createBuffersModel()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*m_model.faces().size() * 3 * 3, m_model.VBO_normals(), GL_STATIC_DRAW);
 
 	// Enable the attribute m_normalLoc
-	glVertexAttribPointer(m_normalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(m_normalLoc);
+	glVertexAttribPointer(gp_aNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(gp_aNormal);
 
 	// Instead of colors, we pass the materials 
 	// VBO Ambient component
@@ -544,7 +538,7 @@ void SSOWidget::modelTransform()
 	geomTransform = glm::translate(geomTransform, -m_modelCenter);
 
 	// Send the matrix to the shader
-	glUniformMatrix4fv(m_transLoc, 1, GL_FALSE, &geomTransform[0][0]);
+	glUniformMatrix4fv(gp_model, 1, GL_FALSE, &geomTransform[0][0]);
 }
 
 void SSOWidget::computeFps()
@@ -560,8 +554,41 @@ void SSOWidget::showFps()
 	// TO DO: Show the FPS
 }
 
+void SSOWidget::GeometryPass()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// projection
+	// view
+
+	//use shader geometrypass
+
+	//model matrix
+
+	//render scene
+
+	gPass_program->bind();
+	// Bind the VAO to draw the model
+	glBindVertexArray(m_VAOModel);
+
+	// Apply the geometric transforms to the model (position/orientation)
+	modelTransform();
+
+	// Draw the model
+	glDrawArrays(GL_TRIANGLES, 0, m_model.faces().size() * 3);
+
+	// Unbind the vertex array
+	glBindVertexArray(0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	gPass_program->release();
+}
+
 void SSOWidget::createGBuffers()
 {
+	glGenBuffers(1, &gBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	// gPosition
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -570,6 +597,7 @@ void SSOWidget::createGBuffers()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
 	// gNormal
 	glGenTextures(1, &gNormal);
@@ -579,7 +607,10 @@ void SSOWidget::createGBuffers()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
+
+	// gAlbedoSpecular
 	glGenTextures(1, &gAlbedoSpec);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
@@ -587,6 +618,13 @@ void SSOWidget::createGBuffers()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
+	
+	// Color attachments to use in this framebuffer
+	attachments[0] = GL_COLOR_ATTACHMENT0;
+	attachments[1] = GL_COLOR_ATTACHMENT1;
+	attachments[2] = GL_COLOR_ATTACHMENT2;
+	glDrawBuffers(3, attachments);
 
 	// Noise Texture
 	glGenTextures(1, &noiseTexture);
@@ -596,6 +634,19 @@ void SSOWidget::createGBuffers()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// SSAO FBO
+	glGenFramebuffers(1, &ssaoFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
+	// SSAO Color Buffer
+	glGenTextures(1, &ssaoColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
 }
 
 void SSOWidget::createSSAOKernels()
