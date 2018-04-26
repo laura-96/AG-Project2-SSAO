@@ -52,7 +52,8 @@ MainWindow::MainWindow()
 	setMenuBar(menuBar);
 
 	//onAddNewQuad();
-	onAddNewModel();
+	//onAddNewModel();
+	onAddNewSSO();
 }
 
 void MainWindow::onAddNewLogo()

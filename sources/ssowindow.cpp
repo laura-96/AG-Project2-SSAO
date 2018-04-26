@@ -12,7 +12,7 @@ SSOWindow::SSOWindow(MainWindow* mw) :m_mainWindow(mw)
 	m_ui.setupUi(this);
 
 	// Insert the m_glWidget in the GUI
-	m_glWidget = new SSOWidget("./models/sponza.obj", false);
+	m_glWidget = new SSOWidget("./models/Patricio.obj", false);
 	layoutFrame = new QVBoxLayout(m_ui.qGLFrame);
 	layoutFrame->setMargin(0);
 	layoutFrame->addWidget(m_glWidget);

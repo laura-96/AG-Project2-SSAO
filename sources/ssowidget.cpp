@@ -61,6 +61,8 @@ SSOWidget::SSOWidget(QString modelFilename, bool showFps, QWidget *parent) : QOp
 	// Shaders
 	m_program = nullptr;
 
+	quadVBO = quadVAO = 0;
+
 }
 
 SSOWidget::~SSOWidget()
@@ -109,7 +111,6 @@ void SSOWidget::initializeGL()
 	
 	createSSAOKernels();
 	createGBuffers();
-	createQuadBuffers();
 
 	createBuffersModel();
 	computeBBoxModel();
@@ -135,6 +136,7 @@ void SSOWidget::paintGL()
 
 	GeometryPass();
 	GenSSAOTexture();
+	LightPass();
 
 	// Show FPS if they are enabled 
 	if (m_showFps)
@@ -375,6 +377,14 @@ void SSOWidget::loadSSAOShader()
 	ssao_screenHeight = glGetAttribLocation(ssao_program->programId(), "screenHeight");
 	ssao_tileSize = glGetAttribLocation(ssao_program->programId(), "tileSize");
 	ssao_projection = glGetAttribLocation(ssao_program->programId(), "projection");
+
+	glUniform1i(ssao_gPos, 0);
+	glUniform1i(ssao_gNormal, 1);
+	glUniform1i(ssao_texNoise, 2);
+
+	glUniform1f(ssao_screenWidth, m_width);
+	glUniform1f(ssao_screenHeight, m_height);
+	glUniform1f(ssao_tileSize, 4.0);
 }
 
 void SSOWidget::initCameraParams()
@@ -384,7 +394,7 @@ void SSOWidget::initCameraParams()
 	m_zFar = 3.0f * m_sceneRadius;
 }
 
-void SSOWidget::projectionTransform()
+void SSOWidget::projectionTransform(bool useSSAO)
 {
 	// Set the camera type
 	glm::mat4 proj(1.0f);
@@ -392,7 +402,10 @@ void SSOWidget::projectionTransform()
 	proj = glm::perspective(m_fov, m_ar, m_zNear, m_zFar);
 
 	// Send the matrix to the shader
-	glUniformMatrix4fv(gp_projection, 1, GL_FALSE, &proj[0][0]);
+	if(!useSSAO)
+		glUniformMatrix4fv(gp_projection, 1, GL_FALSE, &proj[0][0]);
+	else
+		glUniformMatrix4fv(ssao_projection, 1, GL_FALSE, &proj[0][0]);
 
 }
 
@@ -633,7 +646,7 @@ void SSOWidget::GenSSAOTexture()
 	
 	glUniform3fv(ssao_samples, 64, &ssaoKernel[0][0]);
 	
-	projectionTransform();
+	projectionTransform(true);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, ssao_gPos);
@@ -642,35 +655,53 @@ void SSOWidget::GenSSAOTexture()
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, ssao_texNoise);
 
-	// Render Quad
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glBindVertexArray(0);
+	renderQuad();
 
 	ssao_program->release();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSOWidget::createQuadBuffers()
+void SSOWidget::LightPass()
 {
-	float quadVert[] =
-	{
-		// positions        // texture Coords
-		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-	};
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
+
+
+	//Draw quad
 	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVert), &quadVert, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), NULL);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+}
+
+void SSOWidget::renderQuad()
+{
+	if (quadVBO == 0)
+	{
+		float quadVert[] =
+		{
+			// positions        // texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVert), &quadVert, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), NULL);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	}
+
+	// Render Quad
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+	
 }
 
 void SSOWidget::createGBuffers()

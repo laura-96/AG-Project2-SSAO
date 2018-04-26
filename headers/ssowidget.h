@@ -62,7 +62,7 @@ private:
 
 	// Camera
 	void initCameraParams();
-	void projectionTransform(); // Type of camera
+	void projectionTransform(bool useSSAO = false); // Type of camera
 	void resetCamera();
 	void viewTransform(); // Position of the camera
 
@@ -78,7 +78,7 @@ private:
 	bool m_modelLoaded;
 
 	// Quad
-	void createQuadBuffers();
+	void renderQuad();
 
 	// SSAO
 	void createGBuffers();
@@ -94,6 +94,7 @@ private:
 	// Draw
 	void GeometryPass(); // 1st Pass
 	void GenSSAOTexture(); // 2nd Pass
+	void LightPass(); // 3rd Pass
 
 	/* Attributes */
 	// Screen
