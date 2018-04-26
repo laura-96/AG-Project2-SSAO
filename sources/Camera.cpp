@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-Camera::Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float znear, float zfar, int cam_type)
+Camera::Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float scene_radius, int cam_type)
 {
 	// Type
 	type = cam_type;
@@ -21,9 +21,11 @@ Camera::Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float znear, f
 	m_yRotCam = 0.0f;
 	
 	m_camPos = pos_cam;
-	m_zNear = 0.1;
-	m_zFar = 100;
+	m_zNear = scene_radius;
+	m_zFar = scene_radius * 3;
 
+	m_sceneRadius = scene_radius;
+	m_sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f);
 	Update();
 	UpdateProjection();
 }
@@ -116,6 +118,14 @@ void Camera::Update()
 		m_direction = glm::vec3(vrpDir.x, vrpDir.y, vrpDir.z) * 0.5f;
 
 		m_view = glm::lookAt(eye_pos, eye_pos + m_direction, glm::vec3(0.0f, 1.0f, 0.0f)); //eye at up
+	}
+	else
+	{
+		m_view = glm::mat4(1.0f);
+
+		m_view = glm::translate(m_view, m_sceneCenter + m_camPos);
+		m_view = glm::translate(m_view, glm::vec3(m_xPan, -m_yPan, 0.0f));
+		m_view = glm::translate(m_view, -m_sceneCenter);
 	}
 	
 }

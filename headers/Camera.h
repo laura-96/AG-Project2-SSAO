@@ -17,7 +17,7 @@ enum MovementType { FORWARD, BACKWARD, STRAFE_RIGHT, STRAFE_LEFT };
 class Camera
 {
 public:
-	Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float znear, float zfar, int cam_type);
+	Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float scene_radius, int cam_type);
 
 	~Camera();
 

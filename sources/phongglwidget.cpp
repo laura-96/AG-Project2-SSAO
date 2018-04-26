@@ -96,7 +96,7 @@ void PhongGLWidget::initializeGL()
 	computeBBoxModel ();
 	computeCenterRadiusScene();
 	
-	cam = new Camera(m_width, m_height, glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius), m_sceneRadius, 3.0f * m_sceneRadius, 1);
+	cam = new Camera(m_width, m_height, glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius), m_sceneRadius, 0);
 	
 	if (cam->GetType() == 0)
 	{
@@ -402,14 +402,9 @@ void PhongGLWidget::resetCamera()
 
 void PhongGLWidget::viewTransform()
 {
-	glm::mat4 view(1.0f);
 
-	view = cam->GetView();
-	view = glm::translate(view, m_sceneCenter + m_camPos);
-	view = glm::translate(view, glm::vec3(m_xPan, -m_yPan, 0.0f));
-	view = glm::translate(view, -m_sceneCenter);
 	// Send the matrix to the shader
-	glUniformMatrix4fv(m_viewLoc, 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(m_viewLoc, 1, GL_FALSE, &cam->GetView()[0][0]);
 }
 
 void PhongGLWidget::changeBackgroundColor() {
