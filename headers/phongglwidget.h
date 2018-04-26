@@ -19,6 +19,7 @@
 #include "../glm/gtc/matrix_transform.hpp"
 #include "definitions.h"
 #include "model.h"
+#include "Camera.h"
 
 
 class PhongGLWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
@@ -58,7 +59,6 @@ private:
 	void reloadShaders();
 
 	// Camera
-	void initCameraParams();
 	void projectionTransform(); // Type of camera
 	void resetCamera();
 	void viewTransform(); // Position of the camera
@@ -123,6 +123,8 @@ private:
 	float m_xRotCam;
 	float m_yRotCam;
 	int m_doingInteractive;
+
+	Camera* cam;
 
 	// Shaders
     QOpenGLShaderProgram *m_program;
