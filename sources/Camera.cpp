@@ -21,8 +21,8 @@ Camera::Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float scene_ra
 	m_yRotCam = 0.0f;
 	
 	m_camPos = pos_cam;
-	m_zNear = scene_radius;
-	m_zFar = scene_radius * 3;
+	m_zNear = scene_radius * 0.1;
+	m_zFar = scene_radius * 6;
 
 	m_sceneRadius = scene_radius;
 	m_sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -160,6 +160,7 @@ void Camera::Move(MovementType movement)
 {
 	if (type == 1)
 	{
+		Update();
 		switch (movement)
 		{
 		case FORWARD:
@@ -177,6 +178,7 @@ void Camera::Move(MovementType movement)
 		}
 
 		Update();
+		UpdateProjection();
 	}
 	
 }

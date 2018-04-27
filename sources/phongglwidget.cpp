@@ -185,7 +185,6 @@ void PhongGLWidget::keyPressEvent(QKeyEvent *event)
 {
 	makeCurrent();
 
-	cam->Update();
 	switch (event->key()) {
 
 
@@ -290,8 +289,10 @@ void PhongGLWidget::mouseMoveEvent(QMouseEvent *event)
 
 	if (cam->GetType() == 1)
 	{
-		cam->Rotate(0.005 * (m_width/2 - (event->x() * PI / 180.0f)), 0.005 * (m_height / 2 - (event->y() * PI / 180.0f)));
+		//cam->Rotate(0.5 * (m_width/2 - (event->x() * PI / 180.0f)), 0.5 * (m_height / 2 - (event->y() * PI / 180.0f)));
+		
 		viewTransform();
+		
 	}
 	
 	else
@@ -303,6 +304,7 @@ void PhongGLWidget::mouseMoveEvent(QMouseEvent *event)
 		}
 		else if (m_doingInteractive == PAN) {
 			cam->Pan((event->x() - m_xClick)*m_sceneRadius * 0.005f, (event->y() - m_yClick)*m_sceneRadius * 0.005f);
+			
 			viewTransform();
 		}
 
