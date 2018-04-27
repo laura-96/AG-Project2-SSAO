@@ -142,8 +142,8 @@ const glm::mat4 Camera::GetView() const
 
 void Camera::Pan(float x_pan, float y_pan)
 {
-	m_xPan = x_pan;
-	m_yPan = y_pan;
+	m_xPan += x_pan;
+	m_yPan += y_pan;
 
 	Update();
 }
