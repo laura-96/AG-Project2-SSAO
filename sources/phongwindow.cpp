@@ -92,19 +92,6 @@ void PhongWindow::loadCamera(QString cam_type) {
 	QVariant type = m_ui.selectCamera->currentData();
 	
 	int camera_type = type.value<int>();
-	switch (camera_type)
-	{
-		// Static camera's value is 0
-		case 0:
-			break;
-
-		// First Person Camera's value is 1
-		case 1:
-			break;
-
-		default:
-			break;
-
-	}
+	m_glWidget->sceneCameraType(camera_type);
 
 }

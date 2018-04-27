@@ -28,6 +28,7 @@ public:
 
 	void ResizeCamera(float fov, float width, float height);
 
+	void Pan(float x_pan, float y_pan);
 	void Rotate(float x_rot, float y_rot);
 	void Move(MovementType movement);
 	void Update();

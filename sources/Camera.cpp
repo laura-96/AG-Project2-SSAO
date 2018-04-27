@@ -140,10 +140,18 @@ const glm::mat4 Camera::GetView() const
 	return m_view;
 }
 
+void Camera::Pan(float x_pan, float y_pan)
+{
+	m_xPan = x_pan;
+	m_yPan = y_pan;
+
+	Update();
+}
+
 void Camera::Rotate(float x_rot, float y_rot)
 {
-	m_xRotCam -= x_rot;
-	m_yRotCam -= y_rot;
+	m_xRotCam += x_rot;
+	m_yRotCam += y_rot;
 
 	Update();
 }

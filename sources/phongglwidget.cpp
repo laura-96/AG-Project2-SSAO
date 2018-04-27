@@ -64,6 +64,23 @@ QSize PhongGLWidget::sizeHint() const
     return QSize(m_width, m_height);
 }
 
+void PhongGLWidget::sceneCameraType(int type)
+{
+	makeCurrent();
+	if (cam)
+		cam->SetType(type);
+
+	if (cam->GetType() == 0)
+	{
+		setMouseTracking(false);
+	}
+	else
+	{
+		setMouseTracking(true);
+	}
+	update();
+}
+
 void PhongGLWidget::cleanup()
 {
 	if (m_modelLoaded)
@@ -166,40 +183,42 @@ void PhongGLWidget::resizeGL(int w, int h)
 
 void PhongGLWidget::keyPressEvent(QKeyEvent *event)
 {
+	makeCurrent();
+
+	cam->Update();
 	switch (event->key()) {
 
 
-		cam->Update();
 		case Qt::Key_W:
 			std::cout << "-- AGEn message --: Going forward" << std::endl;
-			makeCurrent();
+			
 			cam->Move((MovementType)0);
 			viewTransform();
-			update();
+			
 			break;
 
 		case Qt::Key_S:
 			std::cout << "-- AGEn message --: Going backwards" << std::endl;
-			makeCurrent();
+			
 			cam->Move((MovementType)1);
 			viewTransform();
-			update();
+			
 			break;
 
 		case Qt::Key_D:
 			std::cout << "-- AGEn message --: Going right" << std::endl;
-			makeCurrent();
+			
 			cam->Move((MovementType)2);
 			viewTransform();
-			update();
+			
 			break;
 
 		case Qt::Key_A:
 			std::cout << "-- AGEn message --: Going left" << std::endl;
-			makeCurrent();
+			
 			cam->Move((MovementType)3);
 			viewTransform();
-			update();
+			
 			break;
 		case Qt::Key_B:
 			// Change the background color
@@ -208,10 +227,10 @@ void PhongGLWidget::keyPressEvent(QKeyEvent *event)
 			break;
 		case Qt::Key_C:
 			// Set the camera at the center of the scene
-			makeCurrent();
+			
 			cam->Center();
 			// TO DO: When pressing the C key, the camera must be placed at the center of the scene automatically
-			update();
+			
 
 			break;
 		case Qt::Key_F:
@@ -249,6 +268,7 @@ void PhongGLWidget::keyPressEvent(QKeyEvent *event)
 			event->ignore();
 			break;
 	}
+	update();
 }
 
 void PhongGLWidget::mousePressEvent(QMouseEvent *event)
@@ -280,11 +300,9 @@ void PhongGLWidget::mouseMoveEvent(QMouseEvent *event)
 		{
 			m_yRot += (event->x() - m_xClick) * PI / 180.0f;
 			m_xRot += (event->y() - m_yClick) * PI / 180.0f;
-
 		}
 		else if (m_doingInteractive == PAN) {
-			m_xPan += (event->x() - m_xClick)*m_sceneRadius * 0.005f;
-			m_yPan += (event->y() - m_yClick)*m_sceneRadius * 0.005f;
+			cam->Pan((event->x() - m_xClick)*m_sceneRadius * 0.005f, (event->y() - m_yClick)*m_sceneRadius * 0.005f);
 			viewTransform();
 		}
 

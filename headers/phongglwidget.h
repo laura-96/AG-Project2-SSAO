@@ -34,7 +34,7 @@ public:
     QSize sizeHint() const override;
 
 	// Camera
-	void enableFirstPersonCamera(bool enabled);
+	void sceneCameraType(int type);
 
 public slots:
     void cleanup();
@@ -93,9 +93,6 @@ private:
 	float m_zNear;
 	float m_zFar;
 	float m_radsZoom;
-	float m_xPan;
-	float m_yPan;
-	glm::vec3 m_camPos;
 
 	// Scene
 	glm::vec3 m_sceneCenter;
