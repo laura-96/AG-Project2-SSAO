@@ -4,6 +4,7 @@
 #include <QColorDialog>
 #include <QMessageBox>
 #include <QPainter>
+#include <QTimer>
 #include <math.h>
 
 #include <iostream>
@@ -35,6 +36,8 @@ PhongGLWidget::PhongGLWidget(QString modelFilename, bool showFps, QWidget *paren
 	// Mouse
 	m_xRot = 0.0f;
 	m_yRot = 0.0f;
+	m_xRotPoint = 0;
+	m_yRotPoint = 0;
 	m_xClick = 0;
 	m_yClick = 0;
 	m_doingInteractive = NONE;
@@ -128,13 +131,16 @@ void PhongGLWidget::initializeGL()
 	projectionTransform();
 	viewTransform();
 	setLighting();
+
+
+	QTimer::singleShot(1000, this, SLOT(computeFps()));
 }
 
 void PhongGLWidget::paintGL()
 {
 	// FPS computation
-	computeFps();
-
+	//computeFps();
+	makeCurrent();
 	// Paint the scene
 	glClearColor(m_bkgColor.red() / 255.0f, m_bkgColor.green() / 255.0f, m_bkgColor.blue() / 255.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -156,8 +162,11 @@ void PhongGLWidget::paintGL()
 	glBindVertexArray(0);
 
 	// Show FPS if they are enabled 
+	m_frameCount++;
 	if (m_showFps)
 		showFps();
+
+	update();
 }
 
 void PhongGLWidget::resizeGL(int w, int h)
@@ -289,10 +298,12 @@ void PhongGLWidget::mouseMoveEvent(QMouseEvent *event)
 
 	if (cam->GetType() == 1)
 	{
-		//cam->Rotate(0.5 * (m_width/2 - (event->x() * PI / 180.0f)), 0.5 * (m_height / 2 - (event->y() * PI / 180.0f)));
+		cam->Rotate((event->x() - m_xRotPoint)*m_sceneRadius * 0.0001f, (event->y() - m_yRotPoint)*m_sceneRadius * 0.0001f);
 		
 		viewTransform();
 		
+		m_xRotPoint = event->x();
+		m_yRotPoint = event->y();
 	}
 	
 	else
@@ -312,7 +323,6 @@ void PhongGLWidget::mouseMoveEvent(QMouseEvent *event)
 		m_yClick = event->y();
 	}
 
-	
 	update();
 }
 
@@ -575,14 +585,16 @@ void PhongGLWidget::modelTransform()
 void PhongGLWidget::computeFps() 
 {
 	
-	// TO DO: Compute the FPS
+	m_fps = m_frameCount;
+	m_frameCount = 0;
 
+	QTimer::singleShot(1000, this, SLOT(computeFps()));
 
 }
 
 void PhongGLWidget::showFps()
 {
-	// TO DO: Show the FPS
+
 }
 
 void PhongGLWidget::setLighting() 

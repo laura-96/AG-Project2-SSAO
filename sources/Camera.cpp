@@ -99,25 +99,27 @@ void Camera::Update()
 	if (type == 1)
 	{
 		glm::mat4 rotMatrix(1.0);
-		rotMatrix = glm::rotate(rotMatrix, m_yRotCam, glm::vec3(0.0f, -1.0, 0.0));
+		rotMatrix = glm::rotate(rotMatrix, m_xRotCam, glm::vec3(0.0f, -1.0, 0.0));
 
 		glm::vec4 forward = rotMatrix * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 		glm::vec4 strafe = rotMatrix * glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f);
-
+		glm::vec4 up = rotMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+		
 		glm::normalize(forward);
 		glm::normalize(strafe);
+		glm::normalize(up);
 
 		glm::vec3 strafeDir(strafe);
 		glm::vec3 eye_pos = -m_camPos;
 
 		rotMatrix = glm::mat4(1.0);
-		rotMatrix = glm::rotate(rotMatrix, m_xRotCam, strafeDir);
+		rotMatrix = glm::rotate(rotMatrix, m_yRotCam, strafeDir);
 
 		glm::vec4 vrpDir = rotMatrix * forward;
 
-		m_direction = glm::vec3(vrpDir.x, vrpDir.y, vrpDir.z) * 0.5f;
+		m_direction = (glm::vec3(vrpDir.x, vrpDir.y, vrpDir.z) * 0.5f) + eye_pos;
 
-		m_view = glm::lookAt(eye_pos, eye_pos + m_direction, glm::vec3(0.0f, 1.0f, 0.0f)); //eye at up
+		m_view = glm::lookAt(eye_pos, m_direction, glm::vec3(up)); //eye at up
 	}
 	else
 	{
@@ -164,16 +166,16 @@ void Camera::Move(MovementType movement)
 		switch (movement)
 		{
 		case FORWARD:
-			m_camPos -= glm::normalize(m_direction);
+			m_camPos -= glm::normalize(-m_direction);
 			break;
 		case BACKWARD:
-			m_camPos += glm::normalize(m_direction);
+			m_camPos += glm::normalize(-m_direction);
 			break;
 		case STRAFE_RIGHT:
-			m_camPos -= glm::cross(glm::normalize(m_direction), glm::vec3(0.0f, 1.0f, 0.0f));
+			m_camPos -= glm::normalize(glm::cross(glm::normalize(-m_direction), glm::vec3(0.0f, 1.0f, 0.0f)));
 			break;
 		case STRAFE_LEFT:
-			m_camPos += glm::cross(glm::normalize(m_direction), glm::vec3(0.0f, 1.0f, 0.0f));
+			m_camPos += glm::normalize(glm::cross(glm::normalize(-m_direction), glm::vec3(0.0f, 1.0f, 0.0f)));
 			break;
 		}
 

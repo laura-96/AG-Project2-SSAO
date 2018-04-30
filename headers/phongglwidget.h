@@ -38,7 +38,7 @@ public:
 
 public slots:
     void cleanup();
-
+	void computeFps();
 signals:
 
 protected:
@@ -78,7 +78,7 @@ private:
 	void setLighting();
 
 	// FPS
-	void computeFps();
+	//void computeFps();
 	void showFps();
 	
 	/* Attributes */
@@ -113,6 +113,9 @@ private:
 	glm::vec3 m_lightCol;
 
 	// Mouse
+	int m_xRotPoint;
+	int m_yRotPoint;
+	
 	int m_xClick;
 	int m_yClick;
 	float m_xRot;
@@ -131,7 +134,7 @@ private:
 	GLuint m_lightPosLoc, m_lightColLoc;
 
 	// FPS
-	QTime m_time;
+	//QTime m_time;
 	int m_frameCount;
 	float m_fps;
 	bool m_showFps;

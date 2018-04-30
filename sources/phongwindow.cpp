@@ -12,7 +12,7 @@ PhongWindow::PhongWindow(MainWindow* mw) :m_mainWindow(mw)
 	m_ui.setupUi(this);
 
 	// Insert the m_glWidget in the GUI
-	m_glWidget = new PhongGLWidget("./models/Patricio.obj", false);
+	m_glWidget = new PhongGLWidget("./models/Patricio.obj", true);
 	layoutFrame = new QVBoxLayout(m_ui.qGLFrame);
 	layoutFrame->setMargin(0);
 	layoutFrame->addWidget(m_glWidget);
@@ -68,7 +68,7 @@ void PhongWindow::loadModel()
 	QString filename = QFileDialog::getOpenFileName(this, tr("Load Model"),
 		"./models/", tr("3D Models (*.obj)"));
 
-	bool showFps = false;
+	bool showFps = true;
 	if(filename.size() != 0)
 	{ 
 		// We delete the glWidget and create another one to restart the GLContext
@@ -86,6 +86,7 @@ void PhongWindow::loadModel()
 	
 
 }
+
 
 void PhongWindow::loadCamera(QString cam_type) {
 
