@@ -14,6 +14,7 @@
 #include <QMouseEvent>
 #include <QTime>
 #include <QWheelEvent>
+#include <qopenglframebufferobject.h>
 
 #include "../glm/glm.hpp"
 #include "../glm/gtc/matrix_transform.hpp"
@@ -59,6 +60,7 @@ private:
 
 	void loadGShader();
 	void loadSSAOShader();
+	void loadLightShader();
 
 	// Camera
 	void initCameraParams();
@@ -79,6 +81,7 @@ private:
 
 	// Quad
 	void renderQuad();
+	void createBuffersQuad();
 
 	// SSAO
 	void createGBuffers();
@@ -163,8 +166,15 @@ private:
 
 	unsigned int attachments[3];
 
+	// Light Shader
+	QOpenGLShaderProgram* light_program;
+	GLuint light_vertex, light_texcoords, light_texture;
+
 	// Quad
-	GLuint quadVAO, quadVBO;
+	GLuint quadVAO, quadVBOVert, quadVBOTexCoord;
+
+	// FBO
+	QOpenGLFramebufferObject* g_fbo;
 
 	// Kernels
 	std::vector<glm::vec3> ssaoKernel;

@@ -60,9 +60,6 @@ SSOWidget::SSOWidget(QString modelFilename, bool showFps, QWidget *parent) : QOp
 
 	// Shaders
 	m_program = nullptr;
-
-	quadVBO = quadVAO = 0;
-
 }
 
 SSOWidget::~SSOWidget()
@@ -108,14 +105,31 @@ void SSOWidget::initializeGL()
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &SSOWidget::cleanup);
 	initializeOpenGLFunctions();
 	loadShaders();
+
+	// Init fbo
+	QOpenGLFramebufferObjectFormat format;
+	format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+	g_fbo = new QOpenGLFramebufferObject(m_width, m_height, format);
+	g_fbo->addColorAttachment(m_width, m_height);
+	g_fbo->addColorAttachment(m_width, m_height);
+	g_fbo->addColorAttachment(m_width, m_height);
 	
-	createSSAOKernels();
-	createGBuffers();
+	g_fbo->bindDefault();
+	light_program->bind();
+	createBuffersQuad();
+	//createSSAOKernels();
+	//createGBuffers();
+
+	//g_fbo->bind();
+	gPass_program->bind();
 
 	createBuffersModel();
 	computeBBoxModel();
 	computeCenterRadiusScene();
 	initCameraParams();
+
+	
+
 	projectionTransform();
 	viewTransform();
 	setLighting();
@@ -125,6 +139,9 @@ void SSOWidget::paintGL()
 {
 	// FPS computation
 	computeFps();
+	g_fbo->bind();
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+	glDrawBuffers(3, bufs);
 
 	// Paint the scene
 	glClearColor(m_bkgColor.red() / 255.0f, m_bkgColor.green() / 255.0f, m_bkgColor.blue() / 255.0f, 1.0f);
@@ -135,7 +152,8 @@ void SSOWidget::paintGL()
 		glEnable(GL_CULL_FACE);
 
 	GeometryPass();
-	GenSSAOTexture();
+	//GenSSAOTexture();
+	g_fbo->bindDefault();
 	LightPass();
 
 	// Show FPS if they are enabled 
@@ -294,7 +312,8 @@ void SSOWidget::wheelEvent(QWheelEvent* event)
 void SSOWidget::loadShaders()
 {
 	loadGShader();
-	loadSSAOShader();
+//	loadSSAOShader();
+	loadLightShader();
 
 }
 
@@ -324,7 +343,7 @@ void SSOWidget::loadGShader()
 
 	// Link the program
 	gPass_program->link();
-
+		
 	// Bind the program (we are gonna use this program)
 	gPass_program->bind();
 
@@ -332,9 +351,9 @@ void SSOWidget::loadGShader()
 	gp_aPos = glGetAttribLocation(gPass_program->programId(), "aPos");
 	gp_aNormal = glGetAttribLocation(gPass_program->programId(), "aNormal");
 	gp_aTexCoords = glGetAttribLocation(gPass_program->programId(), "aTexCoords");
-	gp_model = glGetAttribLocation(gPass_program->programId(), "model");
-	gp_view = glGetAttribLocation(gPass_program->programId(), "view");
-	gp_projection = glGetAttribLocation(gPass_program->programId(), "projection");
+	gp_model = glGetUniformLocation(gPass_program->programId(), "model");
+	gp_view = glGetUniformLocation(gPass_program->programId(), "view");
+	gp_projection = glGetUniformLocation(gPass_program->programId(), "projection");
 
 	// Get the uniforms locations of the fragment shader
 	//gp_texcoords = glGetAttribLocation(gPass_program->programId(), "TexCoords");
@@ -385,6 +404,34 @@ void SSOWidget::loadSSAOShader()
 	glUniform1f(ssao_screenWidth, m_width);
 	glUniform1f(ssao_screenHeight, m_height);
 	glUniform1f(ssao_tileSize, 4.0);
+}
+
+void SSOWidget::loadLightShader()
+{
+	QOpenGLShader vs2(QOpenGLShader::Vertex, this);
+	QOpenGLShader fs2(QOpenGLShader::Fragment, this);
+
+	// Load and compile the shaders
+	vs2.compileSourceFile("./shaders/rendertexture.vert");
+	fs2.compileSourceFile("./shaders/rendertexture.frag");
+
+	// Create the program
+	light_program = new QOpenGLShaderProgram;
+
+	// Add the shaders
+	light_program->addShader(&fs2);
+	light_program->addShader(&vs2);
+
+	// Link the program
+	light_program->link();
+
+	// Bind the program (we are gonna use this program)
+	light_program->bind();
+
+	// Get the attribs locations of the vertex shader
+	light_vertex = glGetAttribLocation(light_program->programId(), "vertex");
+	light_texcoords = glGetAttribLocation(light_program->programId(), "vertTexCoords");
+	light_texture = glGetUniformLocation(light_program->programId(), "texture");
 }
 
 void SSOWidget::initCameraParams()
@@ -608,18 +655,6 @@ void SSOWidget::showFps()
 
 void SSOWidget::GeometryPass()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// projection
-	// view
-
-	//use shader geometrypass
-
-	//model matrix
-
-	//render scene
-
 	gPass_program->bind();
 	// Bind the VAO to draw the model
 	glBindVertexArray(m_VAOModel);
@@ -632,9 +667,7 @@ void SSOWidget::GeometryPass()
 
 	// Unbind the vertex array
 	glBindVertexArray(0);
-
-	gPass_program->release();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
 }
 
 void SSOWidget::GenSSAOTexture()
@@ -655,9 +688,12 @@ void SSOWidget::GenSSAOTexture()
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, ssao_texNoise);
 
-	renderQuad();
+	// Bind the VAO to draw the model
+	glBindVertexArray(quadVAO);
 
-	ssao_program->release();
+	// Draw the model
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -665,55 +701,89 @@ void SSOWidget::LightPass()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	light_program->bind();
 
+	QVector<GLuint> texIds = g_fbo->textures();
 
-	//Draw quad
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_2D, texIds[1]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+
+	glUniform1i(light_texture, 10);
+	
+	// Bind the VAO to draw the model
 	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	// Draw the model
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 }
 
 void SSOWidget::renderQuad()
 {
-	if (quadVBO == 0)
-	{
-		float quadVert[] =
-		{
-			// positions        // texture Coords
-			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-			1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-			1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		};
+	               	
+}
 
-		glGenVertexArrays(1, &quadVAO);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVert), &quadVert, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), NULL);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	}
-
-	// Render Quad
+void SSOWidget::createBuffersQuad()
+{
+	// VAO creation
+	glGenVertexArrays(1, &quadVAO);
 	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	// VBO vertices positions
+	glm::vec3 verts[6] = {
+		glm::vec3(-1.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, -1.0f, 0.0f),
+		glm::vec3(-1.0f, 1.0f, 0.0f),
+		glm::vec3(-1.0f, 1.0f, 0.0f),
+		glm::vec3(1.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, 1.0f, 0.0f)
+	};
+
+	glm::vec2 texCoords[6] = {
+		glm::vec2(0.0f, 0.0f),
+		glm::vec2(1.0f, 0.0f),
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(1.0f, 0.0f),
+		glm::vec2(1.0f, 1.0f)
+	};
+
+	// VBO Vertices
+	glGenBuffers(1, &quadVBOVert);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBOVert);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+	// Enable the attribute m_vertexLoc
+	glVertexAttribPointer(light_vertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(light_vertex);
+
+	// VBO Tex Coords
+	glGenBuffers(1, &quadVBOTexCoord);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBOTexCoord);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+
+	// Enable the attribute m_vertexLoc
+	glVertexAttribPointer(light_texcoords, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(light_texcoords);
+
 	glBindVertexArray(0);
-	
+
 }
 
 void SSOWidget::createGBuffers()
 {
-	glGenBuffers(1, &gBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	g_fbo->bind();
 	// gPosition
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
@@ -723,7 +793,7 @@ void SSOWidget::createGBuffers()
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
@@ -734,7 +804,7 @@ void SSOWidget::createGBuffers()
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
@@ -751,7 +821,7 @@ void SSOWidget::createGBuffers()
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 	
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	g_fbo->bindDefault();
 
 	// Noise Texture
 	glGenTextures(1, &noiseTexture);
