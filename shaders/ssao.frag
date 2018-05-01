@@ -1,6 +1,6 @@
 #version 330 core
 
-out float FragColor;
+layout (location = 0) out vec3 FragColor;
 
 in vec2 TexCoords;
 
@@ -26,6 +26,8 @@ uniform mat4 projection;
 
 void main()
 {
+	FragColor = vec3(1.0f);
+	return;
 	// Input from G-Buffer
 	vec3 fragPos = texture(gPosition, TexCoords).xyz;
 	vec3 normal = normalize(texture(gNormal, TexCoords).rgb);
@@ -54,5 +56,5 @@ void main()
 
 	occlusion = 1.0 - (occlusion / kernelSize);
 
-	FragColor = occlusion;
+	//FragColor = vec4(vec3(occlusion), 1.0f);
 }

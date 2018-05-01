@@ -59,7 +59,6 @@ private:
 	void reloadShaders();
 
 	void loadGShader();
-	void loadSSAOShader();
 	void loadLightShader();
 
 	// Camera
@@ -80,8 +79,7 @@ private:
 	bool m_modelLoaded;
 
 	// Quad
-	void renderQuad();
-	void createBuffersQuad();
+	void createBuffersQuad(); 
 
 	// SSAO
 	void createGBuffers();
@@ -96,7 +94,6 @@ private:
 
 	// Draw
 	void GeometryPass(); // 1st Pass
-	void GenSSAOTexture(); // 2nd Pass
 	void LightPass(); // 3rd Pass
 
 	/* Attributes */
@@ -152,23 +149,9 @@ private:
 	GLuint gp_aPos, gp_aNormal, gp_aTexCoords;	// vertex
 	GLuint gp_model, gp_view, gp_projection;	// vertex
 
-	// SSAO Shader
-	QOpenGLShaderProgram* ssao_program;
-	GLuint ssao_aPos, ssao_aTexCoords; // vertex
-	GLuint ssao_gPos, ssao_gNormal, ssao_texNoise, ssao_samples; //fragment
-	GLuint ssao_screenWidth, ssao_screenHeight, ssao_tileSize, ssao_projection; // fragment
-
-
-	// SSAO Buffers
-	GLuint gBuffer, gPosition, gNormal, gAlbedoSpec;
-	GLuint noiseTexture;
-	GLuint ssaoFBO, ssaoColorBuffer;
-
-	unsigned int attachments[3];
-
 	// Light Shader
 	QOpenGLShaderProgram* light_program;
-	GLuint light_vertex, light_texcoords, light_texture;
+	GLuint light_vertex, light_texcoords, gPositionTex, gNormalTex, light_projection;
 
 	// Quad
 	GLuint quadVAO, quadVBOVert, quadVBOTexCoord;
