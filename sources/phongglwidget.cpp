@@ -298,12 +298,12 @@ void PhongGLWidget::mouseMoveEvent(QMouseEvent *event)
 
 	if (cam->GetType() == 1)
 	{
-		cam->Rotate((event->x() - m_xRotPoint)*m_sceneRadius * 0.0001f, (event->y() - m_yRotPoint)*m_sceneRadius * 0.0001f);
+		cam->Rotate((event->x() - m_width/2 - m_xRotPoint) * PI / 180.0f, (event->y() - m_height/2 - m_yRotPoint) * PI / 180.0f);
 		
 		viewTransform();
 		
-		m_xRotPoint = event->x();
-		m_yRotPoint = event->y();
+		m_xRotPoint = (event->x() - m_width / 2);
+		m_yRotPoint = (event->y() - m_height / 2);
 	}
 	
 	else

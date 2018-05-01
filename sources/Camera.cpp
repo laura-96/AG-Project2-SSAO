@@ -162,23 +162,22 @@ void Camera::Move(MovementType movement)
 {
 	if (type == 1)
 	{
-		Update();
 		switch (movement)
 		{
 		case FORWARD:
-			m_camPos -= glm::normalize(-m_direction);
+			m_camPos += glm::normalize(glm::vec3(m_direction.x, 0.0f, m_direction.z));
 			break;
 		case BACKWARD:
-			m_camPos += glm::normalize(-m_direction);
+			m_camPos -= glm::normalize(glm::vec3(m_direction.x, 0.0f, m_direction.z));
 			break;
 		case STRAFE_RIGHT:
-			m_camPos -= glm::normalize(glm::cross(glm::normalize(-m_direction), glm::vec3(0.0f, 1.0f, 0.0f)));
+			m_camPos += glm::normalize(glm::cross(glm::normalize(m_direction), glm::vec3(0.0f, 1.0f, 0.0f)));
 			break;
 		case STRAFE_LEFT:
-			m_camPos += glm::normalize(glm::cross(glm::normalize(-m_direction), glm::vec3(0.0f, 1.0f, 0.0f)));
+			m_camPos -= glm::normalize(glm::cross(glm::normalize(m_direction), glm::vec3(0.0f, 1.0f, 0.0f)));
 			break;
 		}
-
+		
 		Update();
 		UpdateProjection();
 	}
