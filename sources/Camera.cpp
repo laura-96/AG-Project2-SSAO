@@ -36,33 +36,34 @@ Camera::~Camera()
 
 void Camera::Reset()
 {
-	
+	// Camera
+	m_ar = 1.0f;
+	m_fov = PI / 3.0f;
+	m_fovIni = m_fov;
 	m_radsZoom = 0.0f;
 	m_xPan = 0.0f;
 	m_yPan = 0.0f;
-	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
-	m_zNear = m_sceneRadius;
-	m_zFar = 3.0f * m_sceneRadius;
 
-	if (m_ar < 1.0f) {
-		m_fov = 2.0f*atan(tan(m_fovIni / 2.0f) / m_ar) + m_radsZoom;
-	}
-	else {
-		m_fov = m_fovIni + m_radsZoom;
-	}
-
-	m_xRot = 0.0f;
-	m_yRot = 0.0f;
 	m_xRotCam = 0.0f;
 	m_yRotCam = 0.0f;
 
+	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
+	m_zNear = m_sceneRadius * 0.1;
+	m_zFar = m_sceneRadius * 6;
+
+	m_sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f);
+
 	m_projection = glm::perspective(m_fov, m_ar, m_zNear, m_zFar);
+	Update();
+	UpdateProjection();
 
 }
 
 void Camera::Center()
 {
 	m_view = glm::mat4(1.0f);
+	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
+
 	m_view = glm::translate(m_view, m_sceneCenter + m_camPos);
 	m_view = glm::translate(m_view, glm::vec3(m_xPan, -m_yPan, 0.0f));
 	m_view = glm::translate(m_view, -m_sceneCenter);

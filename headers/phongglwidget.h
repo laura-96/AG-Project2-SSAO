@@ -90,8 +90,6 @@ private:
 	float m_ar;
 	float m_fov;
 	float m_fovIni;
-	float m_zNear;
-	float m_zFar;
 	float m_radsZoom;
 
 	// Scene

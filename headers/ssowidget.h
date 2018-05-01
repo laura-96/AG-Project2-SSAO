@@ -20,7 +20,7 @@
 #include "../glm/gtc/matrix_transform.hpp"
 #include "definitions.h"
 #include "model.h"
-
+#include "Camera.h"
 
 class SSOWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
 {
@@ -34,7 +34,7 @@ public:
 	QSize sizeHint() const override;
 
 	// Camera
-	void enableFirstPersonCamera(bool enabled);
+	void sceneCameraType(int type);
 
 	public slots:
 	void cleanup();
@@ -62,7 +62,7 @@ private:
 	void loadLightShader();
 
 	// Camera
-	void initCameraParams();
+	void initCamera();
 	void projectionTransform(bool useSSAO = false); // Type of camera
 	void resetCamera();
 	void viewTransform(); // Position of the camera
@@ -105,12 +105,19 @@ private:
 	float m_ar;
 	float m_fov;
 	float m_fovIni;
-	float m_zNear;
-	float m_zFar;
+
 	float m_radsZoom;
 	float m_xPan;
 	float m_yPan;
-	glm::vec3 m_camPos;
+
+	float m_xRotCam;
+	float m_yRotCam;
+
+	int m_xRotPoint;
+	int m_yRotPoint;
+
+	int cam_type;
+	Camera* camera;
 
 	// Scene
 	glm::vec3 m_sceneCenter;
@@ -135,9 +142,8 @@ private:
 	int m_yClick;
 	float m_xRot;
 	float m_yRot;
-	float m_xRotCam;
-	float m_yRotCam;
 	int m_doingInteractive;
+	
 
 	// Shaders
 	QOpenGLShaderProgram *m_program;

@@ -25,13 +25,12 @@ SSOWidget::SSOWidget(QString modelFilename, bool showFps, QWidget *parent) : QOp
 	m_ar = 1.0f;
 	m_fov = PI / 3.0f;
 	m_fovIni = m_fov;
-	m_zNear = 0.1f;
-	m_zFar = 10.0f;
 	m_radsZoom = 0.0f;
 	m_xPan = 0.0f;
 	m_yPan = 0.0f;
-	m_camPos = glm::vec3(0.0f, 0.0f, -50.0f);
 
+	cam_type = 0;
+	m_xRotPoint = m_yRotPoint = 0;
 	// Scene
 	m_sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_sceneRadius = 50.0f;
@@ -77,6 +76,29 @@ QSize SSOWidget::sizeHint() const
 	return QSize(m_width, m_height);
 }
 
+void SSOWidget::sceneCameraType(int type)
+{
+	makeCurrent();
+
+	if (camera)
+	{
+		camera->SetType(type);
+
+		if (camera->GetType() == 0)
+		{
+			setMouseTracking(false);
+		}
+		else
+		{
+			setMouseTracking(true);
+		}
+
+		cam_type = type;
+	}
+		
+	update();
+}
+
 void SSOWidget::cleanup()
 {
 	if (m_modelLoaded)
@@ -115,7 +137,7 @@ void SSOWidget::initializeGL()
 	createBuffersModel();
 	computeBBoxModel();
 	computeCenterRadiusScene();
-	initCameraParams();
+	initCamera();
 
 	projectionTransform();
 	viewTransform();
@@ -124,16 +146,10 @@ void SSOWidget::initializeGL()
 
 void SSOWidget::paintGL()
 {
-	// FPS computation
-	computeFps();
-
 	GeometryPass();
 		
 	LightPass();
 
-	// Show FPS if they are enabled 
-	if (m_showFps)
-		showFps();
 }
 
 void SSOWidget::resizeGL(int w, int h)
@@ -152,13 +168,47 @@ void SSOWidget::resizeGL(int w, int h)
 		m_fov = m_fovIni + m_radsZoom;
 	}
 
+
+	camera->ResizeCamera(m_fov, m_width, m_height);
 	// After modifying the parameters, we update the camera projection
 	projectionTransform();
 }
 
 void SSOWidget::keyPressEvent(QKeyEvent *event)
 {
+	makeCurrent();
 	switch (event->key()) {
+	case Qt::Key_W:
+		std::cout << "-- AGEn message --: Going forward" << std::endl;
+
+		camera->Move((MovementType)0);
+		viewTransform();
+
+		break;
+
+	case Qt::Key_S:
+		std::cout << "-- AGEn message --: Going backwards" << std::endl;
+
+		camera->Move((MovementType)1);
+		viewTransform();
+
+		break;
+
+	case Qt::Key_D:
+		std::cout << "-- AGEn message --: Going right" << std::endl;
+
+		camera->Move((MovementType)2);
+		viewTransform();
+
+		break;
+
+	case Qt::Key_A:
+		std::cout << "-- AGEn message --: Going left" << std::endl;
+
+		camera->Move((MovementType)3);
+		viewTransform();
+
+		break;
 	case Qt::Key_B:
 		// Change the background color
 		std::cout << "-- AGEn message --: Change background color" << std::endl;
@@ -166,11 +216,7 @@ void SSOWidget::keyPressEvent(QKeyEvent *event)
 		break;
 	case Qt::Key_C:
 		// Set the camera at the center of the scene
-
-
-		// TO DO: When pressing the C key, the camera must be placed at the center of the scene automatically
-
-
+		camera->Center();
 		break;
 	case Qt::Key_F:
 		// Enable/Disable frames per second
@@ -207,6 +253,7 @@ void SSOWidget::keyPressEvent(QKeyEvent *event)
 		event->ignore();
 		break;
 	}
+	update();
 }
 
 void SSOWidget::mousePressEvent(QMouseEvent *event)
@@ -226,20 +273,32 @@ void SSOWidget::mouseMoveEvent(QMouseEvent *event)
 {
 	makeCurrent();
 
-	if (m_doingInteractive == ROTATE)
+	if (camera->GetType() == 1)
 	{
-		m_yRot += (event->x() - m_xClick) * PI / 180.0f;
-		m_xRot += (event->y() - m_yClick) * PI / 180.0f;
+		camera->Rotate((event->x() - m_width / 2 - m_xRotPoint) * PI / 180.0f, (event->y() - m_height / 2 - m_yRotPoint) * PI / 180.0f);
 
-	}
-	else if (m_doingInteractive == PAN) {
-		m_xPan += (event->x() - m_xClick)*m_sceneRadius * 0.005f;
-		m_yPan += (event->y() - m_yClick)*m_sceneRadius * 0.005f;
 		viewTransform();
+
+		m_xRotPoint = (event->x() - m_width / 2);
+		m_yRotPoint = (event->y() - m_height / 2);
 	}
 
-	m_xClick = event->x();
-	m_yClick = event->y();
+	else
+	{
+		if (m_doingInteractive == ROTATE)
+		{
+			m_yRot += (event->x() - m_xClick) * PI / 180.0f;
+			m_xRot += (event->y() - m_yClick) * PI / 180.0f;
+		}
+		else if (m_doingInteractive == PAN) {
+			camera->Pan((event->x() - m_xClick)*m_sceneRadius * 0.005f, (event->y() - m_yClick)*m_sceneRadius * 0.005f);
+
+			viewTransform();
+		}
+
+		m_xClick = event->x();
+		m_yClick = event->y();
+	}
 	update();
 }
 
@@ -276,6 +335,7 @@ void SSOWidget::wheelEvent(QWheelEvent* event)
 		// Total change of the fov to resize well the screen
 		m_radsZoom += m_fov - fovBeforeZoom;
 
+		camera->ResizeCamera(m_fov, m_width, m_height);
 		// After modifying the parameters, we update the camera projection
 		projectionTransform();
 		update();
@@ -390,50 +450,26 @@ void SSOWidget::loadLightShader()
 	glUniform3fv(samples, 64, &ssaoKernel[0][0]);
 }
 
-void SSOWidget::initCameraParams()
+void SSOWidget::initCamera()
 {
-	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
-	//m_zNear = m_sceneRadius;
-	//m_zFar = 3.0f * m_sceneRadius;
+	camera = new Camera(m_width, m_height, glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius), m_sceneRadius, cam_type);
 }
 
 void SSOWidget::projectionTransform(bool useSSAO)
 {
-	// Set the camera type
-	glm::mat4 proj(1.0f);
-
-	proj = glm::perspective(m_fov, m_ar, m_zNear, m_zFar);
-
 	// Send the matrix to the shader
 
 	light_program->bind();
-	glUniformMatrix4fv(light_projection, 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(light_projection, 1, GL_FALSE, &camera->GetProj()[0][0]);
 
 	gPass_program->bind();
-	glUniformMatrix4fv(gp_projection, 1, GL_FALSE, &proj[0][0]);
+	glUniformMatrix4fv(gp_projection, 1, GL_FALSE, &camera->GetProj()[0][0]);
 }
 
 void SSOWidget::resetCamera()
 {
 	makeCurrent();
-	m_radsZoom = 0.0f;
-	m_xPan = 0.0f;
-	m_yPan = 0.0f;
-	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
-	m_zNear = m_sceneRadius;
-	m_zFar = 3.0f * m_sceneRadius;
-
-	if (m_ar < 1.0f) {
-		m_fov = 2.0f*atan(tan(m_fovIni / 2.0f) / m_ar) + m_radsZoom;
-	}
-	else {
-		m_fov = m_fovIni + m_radsZoom;
-	}
-
-	m_xRot = 0.0f;
-	m_yRot = 0.0f;
-	m_xRotCam = 0.0f;
-	m_yRotCam = 0.0f;
+	camera->Reset();
 
 	projectionTransform();
 	viewTransform();
@@ -442,14 +478,8 @@ void SSOWidget::resetCamera()
 
 void SSOWidget::viewTransform()
 {
-	glm::mat4 view(1.0f);
-
-	view = glm::translate(view, m_sceneCenter + m_camPos);
-	view = glm::translate(view, glm::vec3(m_xPan, -m_yPan, 0.0f));
-	view = glm::translate(view, -m_sceneCenter);
-
 	// Send the matrix to the shader
-	glUniformMatrix4fv(gp_view, 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(gp_view, 1, GL_FALSE, &camera->GetView()[0][0]);
 }
 
 void SSOWidget::changeBackgroundColor() {
@@ -595,19 +625,6 @@ void SSOWidget::modelTransform()
 
 	// Send the matrix to the shader
 	glUniformMatrix4fv(gp_model, 1, GL_FALSE, &geomTransform[0][0]);
-}
-
-void SSOWidget::computeFps()
-{
-
-	// TO DO: Compute the FPS
-
-
-}
-
-void SSOWidget::showFps()
-{
-	// TO DO: Show the FPS
 }
 
 void SSOWidget::GeometryPass()
