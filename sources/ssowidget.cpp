@@ -34,7 +34,7 @@ SSOWidget::SSOWidget(QString modelFilename, bool showFps, QWidget *parent) : QOp
 	// Scene
 	m_sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_sceneRadius = 50.0f;
-	m_bkgColor = Qt::black;
+	m_bkgColor = Qt::green;
 	m_backFaceCulling = true;
 
 	// Model
@@ -82,15 +82,6 @@ void SSOWidget::sceneCameraType(int type)
 	{
 		camera->SetType(type);
 
-		if (camera->GetType() == 0)
-		{
-			setMouseTracking(false);
-		}
-		else
-		{
-			setMouseTracking(true);
-		}
-
 		cam_type = type;
 	}
 		
@@ -106,7 +97,16 @@ void SSOWidget::activateSSAO(bool active)
 
 void SSOWidget::setSSAOIntensity(double value)
 {
+	flag_ssao = true;
+	ssao_intensity = (float)value;
+	repaint();
+}
 
+void SSOWidget::activateDrawOnlySSAO(bool active)
+{
+	drawSSAO = active;
+	flag_ssao = true;
+	repaint();
 }
 
 void SSOWidget::cleanup()
@@ -434,7 +434,13 @@ void SSOWidget::loadLightShader()
 	light_projection = glGetUniformLocation(light_program->programId(), "projection");
 
 	useSSAO = glGetUniformLocation(light_program->programId(), "useSSAO");
-	glUniform1i(useSSAO, 1);
+	glUniform1i(useSSAO, 0.2);
+
+	drawSSAOLoc = glGetUniformLocation(light_program->programId(), "drawSSAO");
+	glUniform1i(drawSSAO, 0);
+
+	ssaoIntensityLoc = glGetUniformLocation(light_program->programId(), "ssaoIntensity");
+	glUniform1f(ssaoIntensityLoc, ssao_intensity);
 
 	GLuint screen_width = glGetUniformLocation(light_program->programId(), "screenWidth");
 	GLuint screenHeight = glGetUniformLocation(light_program->programId(), "screenHeight");
@@ -716,7 +722,10 @@ void SSOWidget::LightPass()
 	if (flag_ssao)
 	{	
 		int ssaoVal = usingSSAO ? 1 : 0;
+		int drawssaoVal = drawSSAO ? 1 : 0;
 		glUniform1i(useSSAO, ssaoVal);
+		glUniform1f(ssaoIntensityLoc, ssao_intensity);
+		glUniform1i(drawSSAOLoc, drawssaoVal);
 		flag_ssao = false;
 	}
 	

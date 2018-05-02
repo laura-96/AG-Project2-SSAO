@@ -17,14 +17,12 @@ in float fmatshin;
 uniform vec4 lightPos;
 uniform vec3 lightCol;
 
-vec3 ambientLight = vec3(0.2, 0.2, 0.2);
-
 vec3 Lambert (vec3 NormOCS, vec3 L)
 {
   // We assume that vectors are normalized
 
   // Color initialization with the ambient color
-  vec3 resultCol = ambientLight * fmatamb;
+  vec3 resultCol = vec3(0.0);
 
   // Add the diffuse component
   if (dot (L, NormOCS) > 0)

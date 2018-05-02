@@ -83,7 +83,7 @@
          <item>
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>Intensity: </string>
+            <string>Ambient Intensity: </string>
            </property>
           </widget>
          </item>
@@ -114,6 +114,13 @@
           </spacer>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="onlySSAO">
+         <property name="text">
+          <string>Draw SSAO texture</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QGroupBox" name="cameraGroupBox">

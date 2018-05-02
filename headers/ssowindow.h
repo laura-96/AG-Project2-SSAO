@@ -18,6 +18,7 @@ public:
 	void loadCamera(QString cam_type);
 	void activeSSAO(bool active);
 	void changeSSAOIntensity(double value);
+	void drawOnlySSAO(bool active);
 
 private:
 	Ui::PhongWindow m_ui;

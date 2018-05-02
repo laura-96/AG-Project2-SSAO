@@ -11,6 +11,7 @@ uniform vec3 samples[64];
 uniform mat4 projection;
 
 uniform int useSSAO;
+uniform int drawSSAO;
 
 int kernelSize = 64;
 float radius = 0.5;
@@ -22,15 +23,15 @@ uniform float screenHeight;
 uniform float tileSize;
 
 vec2 noiseScale = vec2(screenWidth / tileSize, screenHeight / tileSize);
-float ambientIntensity = 0.2;
+uniform float ssaoIntensity;
 
 out vec4 FragColor;
 
-float CalcOcclusion()
+float CalcOcclusion(vec2 texCoord)
 {
-	vec3 pixelPos = texture(gPosition, TexCoords).xyz;
-	vec3 pixelNormal = normalize(((texture(gNormal, TexCoords).rgb) + 1.0) * 0.5);
-	vec3 randomVec = normalize(texture(texNoise, TexCoords * noiseScale).xyz);
+	vec3 pixelPos = texture(gPosition, texCoord).xyz;
+	vec3 pixelNormal = normalize(((texture(gNormal, texCoord).rgb) + 1.0) * 0.5);
+	vec3 randomVec = normalize(texture(texNoise, texCoord * noiseScale).xyz);
 	// TBN matrix
 	vec3 tangent = normalize(randomVec - pixelNormal * dot(randomVec, pixelNormal));
 	vec3 bitangent = cross(pixelNormal, tangent);
@@ -52,7 +53,7 @@ float CalcOcclusion()
 		occlusion += (sampleDepth >= samp.z + bias ? 1.0 : 0.0) * rangeCheck;
 	}
 
-	occlusion = (occlusion / kernelSize);
+	occlusion = 1 - (occlusion / kernelSize);
 
 	return occlusion;
 }
@@ -61,8 +62,30 @@ void main()
 {
 	vec4 pixel = texture(gAlbedoSpec, TexCoords);
 
-	if(useSSAO == 1)
-		pixel = mix(pixel, vec4(vec3(0.0), 1.0), CalcOcclusion());
+	if(useSSAO == 1 || drawSSAO == 1)
+	{
+		float occlusion = 0.0;
+		vec2 textelSize = 1.0 / vec2(screenWidth, screenHeight);
+		for(int x = -2; x < 2; ++x)
+		{
+			for(int y = -2; y < 2; ++y)
+			{
+				vec2 offset = vec2(float(x), float(y)) * textelSize;
+				occlusion += CalcOcclusion(TexCoords + offset); 
+			}
+		}
+		occlusion = occlusion / 16.0;
+
+		if(drawSSAO == 1)
+		{
+			FragColor = vec4(vec3(occlusion), 1.0);
+			return;
+		}
+
+		pixel += vec4(vec3(1.0)*occlusion * ssaoIntensity, 1.0);
+	}
+	else
+		pixel += vec4(vec3(1.0)*ssaoIntensity, 1.0);
 	
 	FragColor = pixel;
 }

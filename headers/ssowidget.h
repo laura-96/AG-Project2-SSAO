@@ -37,6 +37,7 @@ public:
 	void sceneCameraType(int type);
 	void activateSSAO(bool active);
 	void setSSAOIntensity(double value);
+	void activateDrawOnlySSAO(bool active);
 
 	public slots:
 	void cleanup();
@@ -161,7 +162,7 @@ private:
 	GLuint light_vertex, light_texcoords, gPositionTex, gNormalTex, gAlbedo;
 	GLuint light_projection, light_trans, light_view;
 	GLuint texNoise, noiseTexture;
-	GLuint useSSAO;
+	GLuint useSSAO, ssaoIntensityLoc, drawSSAOLoc;
 
 	// Quad
 	GLuint quadVAO, quadVBOVert, quadVBOTexCoord;
@@ -181,6 +182,8 @@ private:
 
 	bool flag_ssao = false;
 	bool usingSSAO = true;
+	float ssao_intensity = 0.2f;
+	bool drawSSAO = false;
 
 };
 
