@@ -32,6 +32,7 @@ Camera::Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float scene_ra
 
 Camera::~Camera()
 {
+
 }
 
 void Camera::Reset()
@@ -61,14 +62,10 @@ void Camera::Reset()
 
 void Camera::Center()
 {
-	m_view = glm::mat4(1.0f);
-	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
-
-	m_view = glm::translate(m_view, m_sceneCenter + m_camPos);
-	m_view = glm::translate(m_view, glm::vec3(m_xPan, -m_yPan, 0.0f));
-	m_view = glm::translate(m_view, -m_sceneCenter);
-
+	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);// + m_sceneCenter;
+	m_fov = m_fovIni + DEG2RAD(15.0f);
 	Update();
+	UpdateProjection();
 }
 
 void Camera::ResizeCamera(float fov, float width, float height)
@@ -119,6 +116,10 @@ void Camera::Update()
 		glm::vec4 vrpDir = rotMatrix * forward;
 
 		m_direction = (glm::vec3(vrpDir.x, vrpDir.y, vrpDir.z) * 0.5f) + eye_pos;
+
+		m_view = glm::translate(m_view, m_sceneCenter + m_camPos);
+		m_view = glm::translate(m_view, glm::vec3(m_xPan, -m_yPan, 0.0f));
+		m_view = glm::translate(m_view, -m_sceneCenter);
 
 		m_view = glm::lookAt(eye_pos, m_direction, glm::vec3(up)); //eye at up
 	}
@@ -183,6 +184,11 @@ void Camera::Move(MovementType movement)
 		UpdateProjection();
 	}
 	
+}
+
+void Camera::SetSceneCenter(glm::vec3 scene_center)
+{
+	m_sceneCenter = scene_center;
 }
 
 void Camera::SetType(int type)
