@@ -62,8 +62,8 @@ void Camera::Reset()
 
 void Camera::Center()
 {
-	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);// + m_sceneCenter;
-	m_fov = m_fovIni + DEG2RAD(15.0f);
+	m_camPos = glm::vec3(0.0f, 0.0f, -m_sceneRadius);
+	m_fov = DEG2RAD(15.0f);
 	Update();
 	UpdateProjection();
 }
