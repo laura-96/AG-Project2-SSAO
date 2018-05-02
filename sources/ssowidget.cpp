@@ -290,7 +290,7 @@ void SSOWidget::mouseMoveEvent(QMouseEvent *event)
 
 	if (camera->GetType() == 1)
 	{
-		camera->Rotate((event->x() - m_width / 2 - m_xRotPoint) * PI / 180.0f, (event->y() - m_height / 2 - m_yRotPoint) * PI / 180.0f);
+		camera->Rotate((event->x() - m_width / 2 - m_xRotPoint)* 0.1 * PI / 180.0f, (event->y() - m_height / 2 - m_yRotPoint)* 0.1 * PI / 180.0f);
 
 		viewTransform();
 

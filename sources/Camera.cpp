@@ -21,7 +21,7 @@ Camera::Camera(float screen_w, float screen_h, glm::vec3 pos_cam, float scene_ra
 	m_yRotCam = 0.0f;
 	
 	m_camPos = pos_cam;
-	m_zNear = scene_radius * 0.1;
+	m_zNear = 0.1;
 	m_zFar = scene_radius * 6;
 
 	m_sceneRadius = scene_radius;
@@ -49,7 +49,7 @@ void Camera::Reset()
 	m_yRotCam = 0.0f;
 
 	m_camPos = glm::vec3(0.0f, 0.0f, -2.0f * m_sceneRadius);
-	m_zNear = m_sceneRadius * 0.1;
+	m_zNear = 0.1;
 	m_zFar = m_sceneRadius * 6;
 
 	m_sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -62,8 +62,7 @@ void Camera::Reset()
 
 void Camera::Center()
 {
-	m_camPos = glm::vec3(0.0f, 0.0f, -m_sceneRadius);
-	m_fov = DEG2RAD(15.0f);
+	m_camPos = glm::vec3(0.0f , 0.0f, -m_sceneRadius/2);
 	Update();
 	UpdateProjection();
 }
@@ -80,7 +79,7 @@ void Camera::ResizeCamera(float fov, float width, float height)
 void Camera::UpdateProjection()
 {
 	m_projection = glm::mat4(1.0f);
-	m_zNear = m_sceneRadius;
+	m_zNear = 0.1;
 	m_zFar = 3.0f * m_sceneRadius;
 
 	m_projection = glm::perspective(m_fov, m_ar, m_zNear, m_zFar);
