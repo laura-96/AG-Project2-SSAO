@@ -26,7 +26,7 @@ SSOWindow::SSOWindow(MainWindow* mw) :m_mainWindow(mw)
 	connect(m_ui.qLoadModelButton, SIGNAL(clicked()), this, SLOT(loadModel()));
 	connect(m_ui.selectCamera, SIGNAL(activated(QString)), this, SLOT(loadCamera(QString)));
 	connect(m_ui.activeSSAO, SIGNAL(toggled(bool)), this, SLOT(activeSSAO(bool)));
-	connect(m_ui.ssaoIntensity, SIGNAL(valueChanged(double)), this, SLOT(changeSSAOIntensity(double));
+	connect(m_ui.ssaoIntensity, SIGNAL(valueChanged(double)), this, SLOT(changeSSAOIntensity(double)));
 }
 
 SSOWindow::~SSOWindow()

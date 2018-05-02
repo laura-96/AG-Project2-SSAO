@@ -489,6 +489,11 @@ void SSOWidget::resetCamera()
 void SSOWidget::viewTransform()
 {
 	// Send the matrix to the shader
+
+	light_program->bind();
+	glUniformMatrix4fv(light_view, 1, GL_FALSE, &camera->GetView()[0][0]);
+
+	gPass_program->bind();
 	glUniformMatrix4fv(gp_view, 1, GL_FALSE, &camera->GetView()[0][0]);
 }
 
