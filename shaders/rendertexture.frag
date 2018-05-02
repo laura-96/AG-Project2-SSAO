@@ -10,6 +10,7 @@ uniform vec3 samples[64];
 
 uniform mat4 projection;
 
+uniform int useSSAO;
 
 int kernelSize = 64;
 float radius = 0.5;
@@ -21,6 +22,7 @@ uniform float screenHeight;
 uniform float tileSize;
 
 vec2 noiseScale = vec2(screenWidth / tileSize, screenHeight / tileSize);
+float ambientIntensity = 0.2;
 
 out vec4 FragColor;
 
@@ -50,14 +52,17 @@ float CalcOcclusion()
 		occlusion += (sampleDepth >= samp.z + bias ? 1.0 : 0.0) * rangeCheck;
 	}
 
-	occlusion = 1.0 - (occlusion / kernelSize);
+	occlusion = (occlusion / kernelSize);
 
 	return occlusion;
 }
 
 void main()
 {
+	vec4 pixel = texture(gAlbedoSpec, TexCoords);
+
+	if(useSSAO == 1)
+		pixel = mix(pixel, vec4(vec3(0.0), 1.0), CalcOcclusion());
 	
-	//FragColor = vec4(CalcOcclusion(), 1.0);
-	FragColor = texture(gAlbedoSpec, TexCoords) + vec4(vec3(CalcOcclusion()*0.2), 1.0);
+	FragColor = pixel;
 }

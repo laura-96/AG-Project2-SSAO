@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <qcheckbox.h>
 
 
 SSOWindow::SSOWindow(MainWindow* mw) :m_mainWindow(mw)
@@ -24,6 +25,8 @@ SSOWindow::SSOWindow(MainWindow* mw) :m_mainWindow(mw)
 	connect(m_ui.qUndockButton, SIGNAL(clicked()), this, SLOT(dockUndock()));
 	connect(m_ui.qLoadModelButton, SIGNAL(clicked()), this, SLOT(loadModel()));
 	connect(m_ui.selectCamera, SIGNAL(activated(QString)), this, SLOT(loadCamera(QString)));
+	connect(m_ui.activeSSAO, SIGNAL(toggled(bool)), this, SLOT(activeSSAO(bool)));
+	connect(m_ui.ssaoIntensity, SIGNAL(valueChanged(double)), this, SLOT(changeSSAOIntensity(double));
 }
 
 SSOWindow::~SSOWindow()
@@ -94,4 +97,16 @@ void SSOWindow::loadCamera(QString cam_type) {
 	int camera_type = type.value<int>();
 	m_glWidget->sceneCameraType(camera_type);
 
+}
+
+void SSOWindow::activeSSAO(bool active)
+{
+	if (m_glWidget)
+		m_glWidget->activateSSAO(active);
+}
+
+void SSOWindow::changeSSAOIntensity(double value)
+{
+	if (m_glWidget)
+		m_glWidget->setSSAOIntensity(value);
 }

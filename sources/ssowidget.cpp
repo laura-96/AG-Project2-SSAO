@@ -97,6 +97,18 @@ void SSOWidget::sceneCameraType(int type)
 	update();
 }
 
+void SSOWidget::activateSSAO(bool active)
+{
+	usingSSAO = active;
+	flag_ssao = true;
+	repaint();
+}
+
+void SSOWidget::setSSAOIntensity(double value)
+{
+
+}
+
 void SSOWidget::cleanup()
 {
 	if (m_modelLoaded)
@@ -421,6 +433,8 @@ void SSOWidget::loadLightShader()
 	gAlbedo = glGetUniformLocation(light_program->programId(), "gAlbedoSpec");
 	light_projection = glGetUniformLocation(light_program->programId(), "projection");
 
+	useSSAO = glGetUniformLocation(light_program->programId(), "useSSAO");
+	glUniform1i(useSSAO, 1);
 
 	GLuint screen_width = glGetUniformLocation(light_program->programId(), "screenWidth");
 	GLuint screenHeight = glGetUniformLocation(light_program->programId(), "screenHeight");
@@ -693,6 +707,13 @@ void SSOWidget::LightPass()
 	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 	glUniform1i(texNoise, 8);
+
+	if (flag_ssao)
+	{	
+		int ssaoVal = usingSSAO ? 1 : 0;
+		glUniform1i(useSSAO, ssaoVal);
+		flag_ssao = false;
+	}
 	
 	// Bind the VAO to draw the model
 	glBindVertexArray(quadVAO);

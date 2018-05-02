@@ -17,7 +17,7 @@ in float fmatshin;
 uniform vec4 lightPos;
 uniform vec3 lightCol;
 
-vec3 ambientLight = vec3(0.0, 0.0, 0.0);
+vec3 ambientLight = vec3(0.2, 0.2, 0.2);
 
 vec3 Lambert (vec3 NormOCS, vec3 L)
 {

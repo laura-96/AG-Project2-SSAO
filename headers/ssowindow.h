@@ -16,6 +16,8 @@ public:
 	void dockUndock();
 	void loadModel();
 	void loadCamera(QString cam_type);
+	void activeSSAO(bool active);
+	void changeSSAOIntensity(double value);
 
 private:
 	Ui::PhongWindow m_ui;
