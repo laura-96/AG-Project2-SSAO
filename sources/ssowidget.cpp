@@ -229,6 +229,9 @@ void SSOWidget::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_C:
 		// Set the camera at the center of the scene
 		camera->Center();
+
+		viewTransform();
+		projectionTransform();
 		break;
 	case Qt::Key_F:
 		// Enable/Disable frames per second
