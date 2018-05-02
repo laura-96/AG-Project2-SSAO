@@ -116,6 +116,14 @@ void SSOWidget::cleanup()
 
 	makeCurrent();
 
+	/*if (light_program)
+		delete light_program;
+	if (gPass_program)
+		delete gPass_program;
+
+	if (g_fbo)
+		delete g_fbo;*/
+
 	doneCurrent();
 }
 
@@ -408,8 +416,8 @@ void SSOWidget::loadLightShader()
 	QOpenGLShader fs2(QOpenGLShader::Fragment, this);
 
 	// Load and compile the shaders
-	vs2.compileSourceFile("./shaders/rendertexture.vert");
-	fs2.compileSourceFile("./shaders/rendertexture.frag");
+	vs2.compileSourceFile("./shaders/light.vert");
+	fs2.compileSourceFile("./shaders/light.frag");
 
 	// Create the program
 	light_program = new QOpenGLShaderProgram;
