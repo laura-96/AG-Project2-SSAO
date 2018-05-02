@@ -31,6 +31,7 @@ public:
 	void Pan(float x_pan, float y_pan);
 	void Rotate(float x_rot, float y_rot);
 	void Move(MovementType movement);
+	void SetSceneCenter(glm::vec3 scene_center);
 	void Update();
 	void UpdateProjection();
 	const glm::mat4 GetProj() const;
