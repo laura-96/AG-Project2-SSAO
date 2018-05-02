@@ -4,6 +4,7 @@ in vec2 TexCoords;
 
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
+uniform sampler2D gAlbedoSpec;
 uniform sampler2D texNoise;
 uniform vec3 samples[64];
 
@@ -26,7 +27,7 @@ out vec4 FragColor;
 float CalcOcclusion()
 {
 	vec3 pixelPos = texture(gPosition, TexCoords).xyz;
-	vec3 pixelNormal = normalize(texture(gNormal, TexCoords).rgb);
+	vec3 pixelNormal = normalize(((texture(gNormal, TexCoords).rgb) + 1.0) * 0.5);
 	vec3 randomVec = normalize(texture(texNoise, TexCoords * noiseScale).xyz);
 	// TBN matrix
 	vec3 tangent = normalize(randomVec - pixelNormal * dot(randomVec, pixelNormal));
@@ -56,7 +57,7 @@ float CalcOcclusion()
 
 void main()
 {
-
-	FragColor = vec4(vec3(CalcOcclusion()), 1.0);
-	//FragColor = texture(gPosition, TexCoords);
+	
+	//FragColor = vec4(CalcOcclusion(), 1.0);
+	FragColor = texture(gAlbedoSpec, TexCoords) + vec4(vec3(CalcOcclusion()*0.2), 1.0);
 }

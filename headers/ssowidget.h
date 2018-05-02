@@ -146,7 +146,6 @@ private:
 	
 
 	// Shaders
-	QOpenGLShaderProgram *m_program;
 	GLuint m_matAmbLoc, m_matDiffLoc, m_matSpecLoc, m_matShinLoc;
 	GLuint m_lightPosLoc, m_lightColLoc;
 
@@ -157,7 +156,9 @@ private:
 
 	// Light Shader
 	QOpenGLShaderProgram* light_program;
-	GLuint light_vertex, light_texcoords, gPositionTex, gNormalTex, light_projection;
+	GLuint light_vertex, light_texcoords, gPositionTex, gNormalTex, gAlbedo;
+	GLuint light_projection, light_trans, light_view;
+	GLuint texNoise, noiseTexture;
 
 	// Quad
 	GLuint quadVAO, quadVBOVert, quadVBOTexCoord;

@@ -57,8 +57,6 @@ SSOWidget::SSOWidget(QString modelFilename, bool showFps, QWidget *parent) : QOp
 	m_fps = 0.0f;
 	m_showFps = showFps;
 
-	// Shaders
-	m_program = nullptr;
 }
 
 SSOWidget::~SSOWidget()
@@ -104,13 +102,7 @@ void SSOWidget::cleanup()
 	if (m_modelLoaded)
 		cleanBuffersModel();
 
-	if (m_program == nullptr)
-		return;
-
 	makeCurrent();
-
-	delete m_program;
-	m_program = 0;
 
 	doneCurrent();
 }
@@ -388,6 +380,14 @@ void SSOWidget::loadGShader()
 	gp_model = glGetUniformLocation(gPass_program->programId(), "model");
 	gp_view = glGetUniformLocation(gPass_program->programId(), "view");
 	gp_projection = glGetUniformLocation(gPass_program->programId(), "projection");
+
+	m_matAmbLoc = glGetAttribLocation(gPass_program->programId(), "matamb");
+	m_matDiffLoc = glGetAttribLocation(gPass_program->programId(), "matdiff");
+	m_matSpecLoc = glGetAttribLocation(gPass_program->programId(), "matspec");
+	m_matShinLoc = glGetAttribLocation(gPass_program->programId(), "matshin");
+
+	m_lightPosLoc = glGetUniformLocation(gPass_program->programId(), "lightPos");
+	m_lightColLoc = glGetUniformLocation(gPass_program->programId(), "lightCol");
 }
 
 void SSOWidget::loadLightShader()
@@ -418,6 +418,7 @@ void SSOWidget::loadLightShader()
 
 	gPositionTex = glGetUniformLocation(light_program->programId(), "gPosition");
 	gNormalTex = glGetUniformLocation(light_program->programId(), "gNormal");
+	gAlbedo = glGetUniformLocation(light_program->programId(), "gAlbedoSpec");
 	light_projection = glGetUniformLocation(light_program->programId(), "projection");
 
 
@@ -425,7 +426,7 @@ void SSOWidget::loadLightShader()
 	GLuint screenHeight = glGetUniformLocation(light_program->programId(), "screenHeight");
 	GLuint tileSize = glGetUniformLocation(light_program->programId(), "tileSize");
 	GLuint samples = glGetUniformLocation(light_program->programId(), "samples");
-	GLuint texNoise = glGetUniformLocation(light_program->programId(), "texNoise");
+	texNoise = glGetUniformLocation(light_program->programId(), "texNoise");
 
 	glUniform1f(screen_width, m_width);
 	glUniform1f(screenHeight, m_height);
@@ -434,7 +435,6 @@ void SSOWidget::loadLightShader()
 	createSSAOKernels();
 
 	// Noise Texture
-	GLuint noiseTexture;
 	glGenTextures(1, &noiseTexture);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
@@ -442,10 +442,6 @@ void SSOWidget::loadLightShader()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D, noiseTexture);
-	glUniform1i(texNoise, 8);
 
 	glUniform3fv(samples, 64, &ssaoKernel[0][0]);
 }
@@ -683,6 +679,20 @@ void SSOWidget::LightPass()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
 
 	glUniform1i(gNormalTex, 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, texIds[2]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+
+	glUniform1i(gAlbedo, 3);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glUniform1i(texNoise, 8);
 	
 	// Bind the VAO to draw the model
 	glBindVertexArray(quadVAO);
