@@ -15,7 +15,8 @@ HEADERS       = ./headers/glwidget.h \
 				./headers/normalmapwindow.h \
 				./headers/ssowindow.h \
 				./headers/ssowidget.h \
-				./headers/raytracingwindow.h
+				./headers/raytracingwindow.h \
+				./headers/sphere.h
 
 SOURCES       = ./sources/glwidget.cpp \
                 ./sources/main.cpp \

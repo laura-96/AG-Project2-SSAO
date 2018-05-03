@@ -74,7 +74,8 @@ glm::vec3 RayTracingWindow::traceRay(
 {
 	
 	
-	// TO DO
+	// TO DO return just for not to crash, must change it
+	return glm::vec3(0,0,0);
 
 }
 
