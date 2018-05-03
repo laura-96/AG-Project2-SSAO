@@ -14,7 +14,8 @@ HEADERS       = ./headers/glwidget.h \
 				./headers/normalmapglwidget.h \
 				./headers/normalmapwindow.h \
 				./headers/ssowindow.h \
-				./headers/ssowidget.h
+				./headers/ssowidget.h \
+				./headers/raytracingwindow.h
 
 SOURCES       = ./sources/glwidget.cpp \
                 ./sources/main.cpp \
@@ -32,13 +33,16 @@ SOURCES       = ./sources/glwidget.cpp \
 				./sources/normalmapglwidget.cpp \
 				./sources/normalmapwindow.cpp \
 				./sources/ssowindow.cpp \
-				./sources/ssowidget.cpp
+				./sources/ssowidget.cpp \
+				./sources/raytracingwindow.cpp
 
 QT           += widgets
 FORMS		 = ./forms/basicwindow.ui \
 			   ./forms/phongwindow.ui \
 			   ./forms/texturingwindow.ui \
-			   ./forms/normalmapwindow.ui
+			   ./forms/normalmapwindow.ui \
+			   ./forms/raytracingwindow.ui
+			   
 CONFIG += console
 INCLUDEPATH += ./glm \
 			   ./headers \
